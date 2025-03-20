@@ -1,0 +1,274 @@
+---
+title: "Projet_intensif"
+author: "Jeanne MEDENOU"
+date: '2025-03-15'
+output: html_document
+---
+
+```{r}
+#Importation et nettoyage des données
+
+
+#meteo <- read_csv("C:/Users/jeann/Downloads/Projet_données/8090.csv")
+
+#
+#
+
+
+#meteo<-na.omit(meteo)
+#infos<-na.omit(infos)
+#location<-na.omit(location)
+
+
+
+```
+
+
+
+
+```{r}
+#nombre de location  par jour
+
+library(tidyverse)
+#location<-location[,-1]
+
+location_jour<-location %>% 
+  count(date) %>% 
+  group_by(date)
+
+```
+
+
+
+
+```{r}
+#nombre de location par heure par date
+location_heure<-location %>% 
+  mutate(hour=hour(heure)) %>% 
+  group_by(date) %>% 
+  count(hour)
+
+
+
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+```{r}
+#Evolution du nombre de trottinettes en fonction de la température
+res_temperature<-lm(n~temperature,data=base_grande)
+summary(res_temperature)
+
+plot(base_grande$temperature,base_grande$n)
+abline(res_temperature$coefficients,col="red")
+
+
+```
+
+
+
+```{r}
+meteo_1$location<-location_heure_1$n
+
+meteo_1<-meteo
+
+location_heure_1<-location_heure[1:4512,]
+
+verif<-merge(meteo_1,location_heure_1,by=c("Date","Hour"))
+
+verif<-verif[,-11]
+
+```
+
+
+
+
+
+```{r}
+#moyennes des variables météorologiques par jour
+
+moyennes<-meteo %>% 
+  select(Date,Temperature,Humidity,Wind_speed,Visibility,Dew_point_temperature,Solar_Radiation,Rainfall,Snowfall) %>% 
+  group_by(Date) %>% 
+  summarise(Temperature=mean(Temperature),Humidity=mean(Humidity),Wind_speed=mean(Wind_speed),visibility=mean(Visibility),rosee=mean(Dew_point_temperature),solar=mean(Solar_Radiation),Rainfall=mean(Rainfall),snowfall=mean(Snowfall))
+
+#moyennes des variables météorologiques sans NA
+
+moyennes_1<-moyennes[1:171,]
+
+#moyennes_1<-na.omit(moyennes)
+
+
+
+
+
+
+
+```
+
+
+
+
+```{r}
+#Fusion des bases
+#infos<-infos[,-1]
+infos_1<-infos[1:171,]
+
+saisons<-merge(infos_1,location_jour,by="date")
+colnames(moyennes_1)<-c("date","temperature","humidity","wind_speed","visibility","rosee","solar","pluie","neige")
+
+base_grande<-merge(moyennes_1,saisons,by="date")
+
+#base_grande<-base_grande[,-10]
+```
+
+
+```{r}
+
+#Visualisation globale des données
+
+#ACP
+
+#Standartisation
+
+
+
+#meteo<-meteo[,-c(1,2)]
+
+'''
+ meteo_scaled<-meteo %>% 
+   mutate(temp=scale(Temperature),humid=scale(Humidity),vent=scale(Wind_speed),vision=scale(Visibility),rosee=scale(Dew_point_temperature),rayos=scale(Solar_Radiation),pluie=scale(Rainfall),neige=scale(Snowfall))
+'''
+ 
+meteo_scaled<-meteo_scaled %>% 
+  select(Date,Hour,temp,humid,vent,vision,rosee,rayos,pluie,neige)
+
+
+meteo_scaled<-na.omit(meteo_scaled)
+
+
+
+
+#install.packages("corrr")
+#install.packages(("ggcorrplot"))
+library(corrr)
+library(ggcorrplot)
+#library(Factoshiny)
+library(FactoMineR)
+library(factoextra)
+
+#acp
+acp<-princomp(meteo_scaled)
+#visualisation des composantes des axes 
+summary(acp)
+
+
+#visualisation des axes principales
+acp$loadings[,1:2]
+
+#cut plot
+
+fviz_eig(acp,addlabels = TRUE)
+
+
+fviz_pca_var(acp,col.var = "black")
+
+#qualité de la représentation
+fviz_cos2(acp,choice="var",axes=1:2)
+
+
+#ACP et qualité de la représentation
+
+fviz_pca_var(acp,col.var = "cos2",gradient.cols=c("black","orange","green"),repel = TRUE)
+```
+
+
+
+
+
+```{r}
+#Nombre de locations en fonction des données météorologiques
+
+res_lm_1<-lm(n~temperature+humidity+wind_speed+visibility+rosee+solar+pluie+neige,data=base_grande)
+
+
+summary(res_lm_1)
+```
+
+
+
+```{r}
+#
+
+#Influence de la nature du jour sur la location de trottinettes
+
+
+res_anova<-aov(n~Holiday+Functioning.Day,data=base_grande)
+
+summary(res_anova)
+
+
+
+
+
+
+
+```
+
+
+```{r}
+#Détection des points influents
+
+ plot(res_lm_1,5)
+
+plot(res_lm_1,4)
+
+influentes<-which(cooks.distance(res_lm_1)>4/171)
+influentes
+
+base_grande[influentes,]
+
+```
+
+
+```{r}
+#Prédictions
+
+#choix du modèle
+
+
+
+```
+
+
+
+
+
+
+
+
+```{r}
+#Exportation de données
+
+library("openxlsx")
+
+write.csv(verif,"C:/Users/jeann/Downloads/Base_projet.csv")
+
+write.csv(saisons,"C:/Users/jeann/Downloads/saison.csv")
+
+write.csv(base_grande,"C:/Users/jeann/Downloads/base.csv")
+write.csv(grande_base_2,"C:/Users/jeann/Downloads/base_na.csv")
+
+```
+
+
+
